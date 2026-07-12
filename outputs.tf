@@ -1,3 +1,7 @@
+output "healthbots_id" {
+  description = "Map of id values across all healthbots, keyed the same as var.healthbots"
+  value       = { for k, v in azurerm_healthbot.healthbots : k => v.id }
+}
 output "healthbots_bot_management_portal_url" {
   description = "Map of bot_management_portal_url values across all healthbots, keyed the same as var.healthbots"
   value       = { for k, v in azurerm_healthbot.healthbots : k => v.bot_management_portal_url }

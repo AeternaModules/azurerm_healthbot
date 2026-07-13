@@ -17,53 +17,54 @@ EOT
     sku_name            = string
     tags                = optional(map(string))
   }))
-  # --- Unconfirmed validation candidates, derived from azurerm_healthbot's provider source ---
-  # Not auto-enabled: either a bespoke provider validator we can't safely translate,
-  # or a path that crosses a list-typed block (needs its own for_each wrapping).
-  # Review, translate into a real validation{} block above, and delete once confirmed.
-  # path: name
-  #   source:    [from validate.HealthbotName] !ok
-  # path: name
-  #   condition: length(value) >= 2
-  #   message:   [from validate.HealthbotName: invalid when len(value) < 2]
-  #   source:    [from validate.HealthbotName: invalid when len(value) < 2]
-  # path: name
-  #   condition: length(value) <= 64
-  #   message:   [from validate.HealthbotName: invalid when len(value) > 64]
-  #   source:    [from validate.HealthbotName: invalid when len(value) > 64]
-  # path: name
-  #   source:    [from validate.HealthbotName] !regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`).MatchString(v)
-  # path: resource_group_name
-  #   condition: length(value) <= 90
-  #   message:   [from resourcegroups.ValidateName: invalid when len(value) > 90]
-  #   source:    [from resourcegroups.ValidateName: invalid when len(value) > 90]
-  # path: resource_group_name
-  #   condition: !endswith(value, ".")
-  #   message:   [from resourcegroups.ValidateName: must not end with "."]
-  #   source:    [from resourcegroups.ValidateName: must not end with "."]
-  # path: resource_group_name
-  #   condition: length(value) != 0
-  #   message:   [from resourcegroups.ValidateName: invalid when len(value) == 0]
-  #   source:    [from resourcegroups.ValidateName: invalid when len(value) == 0]
-  # path: resource_group_name
-  #   source:    [from resourcegroups.ValidateName] !matched
-  # path: location
-  #   source:    location.EnhancedValidate: no recognizable `if ... { errors = append(...) }` pattern - read it by hand
-  # path: sku_name
-  #   source:    validation.StringInSlice value list is not a literal []string - likely a generated PossibleValuesFor*() helper; resolve separately
-  # path: tags
-  #   condition: length(value) <= 50
-  #   message:   [from tags.Validate: invalid when len(value) > 50]
-  #   source:    [from tags.Validate: invalid when len(value) > 50]
-  # path: tags
-  #   condition: length(value) <= 512
-  #   message:   [from tags.Validate: invalid when len(value) > 512]
-  #   source:    [from tags.Validate: invalid when len(value) > 512]
-  # path: tags
-  #   source:    [from tags.Validate] err != nil
-  # path: tags
-  #   condition: length(value) <= 256
-  #   message:   [from tags.Validate: invalid when len(value) > 256]
-  #   source:    [from tags.Validate: invalid when len(value) > 256]
+  validation {
+    condition = alltrue([
+      for k, v in var.healthbots : (
+        length(v.name) >= 2
+      )
+    ])
+    error_message = "[from validate.HealthbotName: invalid when len(value) < 2]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.healthbots : (
+        length(v.name) <= 64
+      )
+    ])
+    error_message = "[from validate.HealthbotName: invalid when len(value) > 64]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.healthbots : (
+        length(v.resource_group_name) <= 90
+      )
+    ])
+    error_message = "[from resourcegroups.ValidateName: invalid when len(value) > 90]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.healthbots : (
+        !endswith(v.resource_group_name, ".")
+      )
+    ])
+    error_message = "[from resourcegroups.ValidateName: must not end with \".\"]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.healthbots : (
+        length(v.resource_group_name) != 0
+      )
+    ])
+    error_message = "[from resourcegroups.ValidateName: invalid when len(value) == 0]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.healthbots : (
+        v.tags == null || (length(v.tags) <= 50)
+      )
+    ])
+    error_message = "[from tags.Validate: invalid when len(value) > 50]"
+  }
+  # Note: 8 additional provider-side validators are enforced at apply time but not mirrored as validation{} blocks here (bespoke or non-mechanically-translatable).
 }
 
